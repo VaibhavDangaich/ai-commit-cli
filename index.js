@@ -62,7 +62,7 @@ async function main() {
             execSync(`git commit -m "${escapedMessage}"`, { stdio: 'inherit' });
             console.log('\n✅ Changes committed successfully.');
         } else {
-            console.log('❌ Commit cancelled.');
+            console.log('❌ Commit cancelled');
         }
 
     } catch (err) {
