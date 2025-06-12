@@ -23,7 +23,8 @@ try {
 // Step 2: Send diff to your backend
 let message;
 try {
-    const res = await axios.post('http://localhost:3000/generate', { diff });
+    const backendUrl = process.env.AI_COMMIT_BACKEND || 'http://localhost:3000';
+    const res = await axios.post(`${backendUrl}/generate`, { diff });
     message = res.data.message;
     console.log('\n✅ Suggested commit message:\n');
     console.log(message);
