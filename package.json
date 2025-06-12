@@ -1,12 +1,16 @@
 {
   "name": "ai-commit-cli",
   "version": "1.0.0",
+  "description": "Generate Git commit messages with AI",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "bin": {
+    "ai-commit": "./index.js"
   },
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "dependencies": {
+    "simple-git": "^3.28.0"
+  }
 }

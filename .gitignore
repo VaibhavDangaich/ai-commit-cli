@@ -1,0 +1,15 @@
+node_modules
+    
+# Ignore build output
+/dist
+# Ignore environment files
+/.env
+# Ignore logs
+/logs
+# Ignore coverage reports
+/coverage
+# Ignore temporary files
+/tmp
+# Ignore IDE specific files
+/.vscode
+# Ignore OS generated files                 
