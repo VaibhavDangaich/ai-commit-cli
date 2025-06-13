@@ -4,21 +4,75 @@ import { execSync } from 'child_process';
 import axios from 'axios';
 import readline from 'readline';
 
+// Function to filter out diffs for large binary/asset files
+function filterLargeAssetDiffs(fullDiff) {
+    const lines = fullDiff.split('\n');
+    let filteredDiffLines = [];
+    let currentFileIsLargeAsset = false;
+
+    // List of file extensions to exclude from the diff sent to AI
+    const largeAssetExtensions = [
+        '.svg', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.webp',
+        '.mp4', '.mov', '.avi', '.wmv', '.flv', '.mkv',
+        '.mp3', '.wav', '.ogg', '.flac',
+        '.zip', '.rar', '.7z', '.tar', '.gz',
+        '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+    ];
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        // Check for new file headers in the diff (e.g., 'diff --git a/path/to/file.ext b/path/to/file.ext')
+        if (line.startsWith('diff --git')) {
+            const filePathMatch = line.match(/a\/([^ ]+) b\/([^ ]+)/);
+            if (filePathMatch && filePathMatch[1]) {
+                const filePath = filePathMatch[1];
+                const fileExtension = '.' + filePath.split('.').pop().toLowerCase();
+                if (largeAssetExtensions.includes(fileExtension)) {
+                    currentFileIsLargeAsset = true;
+                    // Optionally add a placeholder to indicate a large file was skipped
+                    filteredDiffLines.push(`[Skipping diff for large asset: ${filePath}]`);
+                    continue; // Skip processing lines for this file
+                } else {
+                    currentFileIsLargeAsset = false;
+                }
+            }
+        }
+
+        if (!currentFileIsLargeAsset) {
+            filteredDiffLines.push(line);
+        }
+    }
+    return filteredDiffLines.join('\n').trim();
+}
+
+
 // Step 1: Get staged git diff
 let diff;
 try {
-    // Increase maxBuffer to handle larger diff outputs (e.g., large SVG files)
-    // Default is 1MB. Setting to 50MB to accommodate even larger diffs.
-    diff = execSync('git diff --cached', { encoding: 'utf-8', maxBuffer: 50 * 1024 * 1024 }); // Increased to 50MB
+    // Increase maxBuffer to handle larger diff outputs from git itself,
+    // before filtering is applied. Setting to 50MB.
+    diff = execSync('git diff --cached', { encoding: 'utf-8', maxBuffer: 50 * 1024 * 1024 });
 
     if (!diff) {
         console.log('No staged changes to commit.');
         process.exit(0);
     }
 
+    // Filter out large asset diffs before sending to the backend/AI
+    const filteredDiff = filterLargeAssetDiffs(diff);
+
+    if (!filteredDiff) {
+        console.log('No relevant code changes found to generate a commit message (large assets were filtered out).');
+        process.exit(0);
+    }
+
     console.log('🧠 Generating commit message using Gemini AI...');
+
+    // Use the filtered diff for the AI call
+    diff = filteredDiff;
+
 } catch (err) {
-    // Reverted to the original, simpler error message for git diff failures
     console.error('❌ Failed to get git diff:', err.message);
     process.exit(1);
 }
