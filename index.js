@@ -7,7 +7,9 @@ import readline from 'readline';
 // Step 1: Get staged git diff
 let diff;
 try {
-    diff = execSync('git diff --cached', { encoding: 'utf-8' });
+    // Increase maxBuffer to handle larger diff outputs (e.g., large SVG files)
+    // Default is 1MB. Setting to 10MB as a common practice.
+    diff = execSync('git diff --cached', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
 
     if (!diff) {
         console.log('No staged changes to commit.');
@@ -16,6 +18,7 @@ try {
 
     console.log('🧠 Generating commit message using Gemini AI...');
 } catch (err) {
+    // Reverted to the original, simpler error message for git diff failures
     console.error('❌ Failed to get git diff:', err.message);
     process.exit(1);
 }
@@ -23,13 +26,32 @@ try {
 // Step 2: Send diff to your backend
 let message;
 try {
-    const backendUrl = process.env.AI_COMMIT_BACKEND || 'http://localhost:3000';
+    // Ensure this URL is the correct one for your deployed Render backend
+    const backendUrl = 'https://ai-commit-backend.onrender.com';
+    console.log(`Attempting to connect to backend at: ${backendUrl}/generate`); // Log the URL
     const res = await axios.post(`${backendUrl}/generate`, { diff });
     message = res.data.message;
     console.log('\n✅ Suggested commit message:\n');
     console.log(message);
 } catch (err) {
-    console.error('❌ Failed to get commit message:', err.message);
+    console.error('❌ Failed to get commit message!!');
+    // Log more details about the Axios error
+    if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('  Status:', err.response.status);
+        console.error('  Data:', err.response.data);
+        console.error('  Headers:', err.response.headers);
+    } else if (err.request) {
+        // The request was made but no response was received
+        // `err.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        console.error('  No response received. Request details:', err.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error('  Error setting up request:', err.message);
+    }
+    console.error('  Full error object:', err); // Log the entire error object
     process.exit(1);
 }
 
