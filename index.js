@@ -8,8 +8,8 @@ import readline from 'readline';
 let diff;
 try {
     // Increase maxBuffer to handle larger diff outputs (e.g., large SVG files)
-    // Default is 1MB. Setting to 10MB as a common practice.
-    diff = execSync('git diff --cached', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
+    // Default is 1MB. Setting to 50MB to accommodate even larger diffs.
+    diff = execSync('git diff --cached', { encoding: 'utf-8', maxBuffer: 50 * 1024 * 1024 }); // Increased to 50MB
 
     if (!diff) {
         console.log('No staged changes to commit.');
