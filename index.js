@@ -82,7 +82,7 @@ let message;
 try {
     // Ensure this URL is the correct one for your deployed Render backend
     const backendUrl = 'https://ai-commit-backend.onrender.com';
-    console.log(`Attempting to connect to backend at: ${backendUrl}/generate`); // Log the URL
+     // Log the URL
     const res = await axios.post(`${backendUrl}/generate`, { diff });
     message = res.data.message;
     console.log('\n✅ Suggested commit message:\n');
